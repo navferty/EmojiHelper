@@ -4,9 +4,30 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:EmojiHelper"
+        xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="50" Width="Auto"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent">
     <Grid>
-
+        <ItemsControl ItemsSource="{Binding Emojis}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding Key}" HorizontalAlignment="Center"/>
+                        <Button Width="30" Height="30" BorderBrush="Transparent" Click="Button_Click" >
+                            <emoji:TextBlock FontSize="18" Text="{Binding Value}"/>
+                            <Button.Background>
+                                <SolidColorBrush Color="Transparent" Opacity="0.2"/>
+                            </Button.Background>
+                        </Button>
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </Window>
