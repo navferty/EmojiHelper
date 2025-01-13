@@ -1,4 +1,8 @@
-﻿using System.Windows;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using System.Windows;
 using System.Windows.Interop;
 using Application = System.Windows.Application;
 
@@ -13,6 +17,8 @@ public partial class App : Application
     private MainWindow _mainWindow = null!;
     private Window _hiddenWindow = null!;
     private HotkeyHelper _hotkeyHelper = null!;
+
+    private IHost _host = null!;
 
     /*
         😂
@@ -43,6 +49,21 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        _host = Host.CreateDefaultBuilder(e.Args)
+            .ConfigureAppConfiguration((context, config) =>
+            {
+                var connectionString = "Data Source=appsettings.db";
+                config.AddSqliteConfiguration(connectionString);
+            })
+            .ConfigureServices((context, services) =>
+            {
+                services.Configure<AppSettings>(context.Configuration);
+            })
+            .Build();
+
+        var appSettings = _host.Services.GetRequiredService<IOptionsMonitor<AppSettings>>();
+        appSettings.OnChange(OnAppSettingsChanged);
+
         _mainWindow = new MainWindow(this);
         _mainWindow.Loaded += MainWindow_Loaded;
 
@@ -65,6 +86,11 @@ public partial class App : Application
         _notifyIcon.ContextMenuStrip = contextMenu;
     }
 
+    private static void OnAppSettingsChanged(AppSettings newSettings)
+    {
+        Console.WriteLine($"Settings changed: Setting1={newSettings.Setting1}, Setting2={newSettings.Setting2}");
+    }
+
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         //_mainWindow.Hide();
@@ -81,6 +107,7 @@ public partial class App : Application
     {
         _hotkeyHelper.UnregisterHotkeys();
         _notifyIcon.Dispose();
+        _host.Dispose();
 
         base.OnExit(e);
     }
@@ -91,5 +118,11 @@ public partial class App : Application
         _mainWindow.Visibility = Visibility.Visible;
         _mainWindow.Show();
         _mainWindow.Activate();
+    }
+
+    public void UpdateConfiguration(string key, string value)
+    {
+        var configuration = _host.Services.GetRequiredService<IConfiguration>();
+        configuration[key] = value;
     }
 }
