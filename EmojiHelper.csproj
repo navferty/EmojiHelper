@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="favicon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Emoji.Wpf" Version="0.3.4" />
   </ItemGroup>
 

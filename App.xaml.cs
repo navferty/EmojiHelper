@@ -50,9 +50,11 @@ public partial class App : Application
         _hiddenWindow.Loaded += HiddenWindow_Loaded;
         _hiddenWindow.Show();
 
+        using var iconStream = typeof(App).Assembly.GetManifestResourceStream("EmojiHelper.favicon.ico")
+            ?? throw new InvalidOperationException("Icon not found");
         _notifyIcon = new NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = new Icon(iconStream),
             Visible = true,
             Text = "InputHelper"
         };
