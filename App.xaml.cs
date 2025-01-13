@@ -14,7 +14,30 @@ public partial class App : Application
     private Window _hiddenWindow = null!;
     private HotkeyHelper _hotkeyHelper = null!;
 
-    public string[] Emojis { get; } = [ "😀", "🤔", "🤣", "😂", "🤦‍♀️", "✌", "😎", "😜", "👏", "😜" ];
+    /*
+        😂
+        ❤️
+        👍
+        😭
+        🔥
+        🥺
+        💀
+        ✅
+        ❌
+        ✨
+
+        😊
+        ⭐
+        🙏
+        👀
+        🛒
+        🎉
+        😍
+        😔
+        👉👈
+     */
+
+    public string[] Emojis { get; } = [ "😂", "❤️", "👍", "😭", "🔥", "🥺", "💀", "✅", "❌", "✨" ];
 
     protected override void OnStartup(StartupEventArgs e)
     {
