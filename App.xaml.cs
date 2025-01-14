@@ -58,11 +58,25 @@ public partial class App : Application
             .ConfigureServices((context, services) =>
             {
                 services.Configure<AppSettings>(context.Configuration);
+                services.Configure<AppSettingsInner1>(context.Configuration.GetSection(AppSettingsInner1.SectionName));
+                services.Configure<AppSettingsInner2>(context.Configuration.GetSection(AppSettingsInner2.SectionName));
             })
             .Build();
 
         var appSettings = _host.Services.GetRequiredService<IOptionsMonitor<AppSettings>>();
         appSettings.OnChange(OnAppSettingsChanged);
+
+        var configuration = _host.Services.GetRequiredService<IConfiguration>();
+        configuration["folder1:Setting1"] = "folder1 Setting1 value";
+        configuration["folder1:Setting2"] = "folder1 Setting2 value";
+        configuration["folder2:Setting1"] = "folder2 Setting1 value";
+        configuration["folder2:Setting2"] = "folder2 Setting2 value";
+
+        var appSettingsInner1 = _host.Services.GetRequiredService<IOptionsMonitor<AppSettingsInner1>>();
+        var appSettingsInner2 = _host.Services.GetRequiredService<IOptionsMonitor<AppSettingsInner2>>();
+
+        Console.WriteLine($"AppSettingsInner1: Setting1={appSettingsInner1.CurrentValue.Setting1}, Setting2={appSettingsInner1.CurrentValue.Setting2}");
+        Console.WriteLine($"AppSettingsInner2: Setting1={appSettingsInner2.CurrentValue.Setting1}, Setting2={appSettingsInner2.CurrentValue.Setting2}");
 
         _mainWindow = new MainWindow(this);
         _mainWindow.Loaded += MainWindow_Loaded;
