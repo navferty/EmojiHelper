@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Resource Include="favicon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="favicon.ico" />
   </ItemGroup>
 
