@@ -7,9 +7,11 @@ namespace EmojiHelper;
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
-public partial class MainWindow : Window
+public sealed partial class MainWindow : Window, IDisposable
 {
     private readonly App app;
+    private readonly IDisposable _settingsSubscription;
+
     //private readonly Visual _myVisual;
 
     public MainWindow(App app)
@@ -19,10 +21,13 @@ public partial class MainWindow : Window
         Closing += MainWindow_Closing;
         KeyDown += MainWindow_KeyDown;
         this.app = app;
+
+        _settingsSubscription = app.AppSettings.OnChange((settings, _) => OnSettingsChanged(settings))!;
+
         //_myVisual = new DrawingVisual();
         //_myVisual.EnsureVisualConnected(this);
 
-        DataContext = new MainViewModel(app.Emojis);
+        DataContext = new MainViewModel(app.AppSettings.CurrentValue.Emojis);
     }
 
     private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -58,10 +63,24 @@ public partial class MainWindow : Window
 
     private void SendEmojiByIndex(int index)
     {
-        if (index >= 0 && index < app.Emojis.Length)
+        var emojis = app.AppSettings.CurrentValue.Emojis;
+        if (index >= 0 && index < emojis.Length)
         {
-            InputHelpers.SendText(app.Emojis[index]);
+            InputHelpers.SendText(emojis[index]);
         }
+    }
+
+    private void OnSettingsChanged(AppSettings newSettings)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            DataContext = new MainViewModel(newSettings.Emojis);
+        });
+    }
+
+    public void Dispose()
+    {
+        _settingsSubscription.Dispose();
     }
 }
 

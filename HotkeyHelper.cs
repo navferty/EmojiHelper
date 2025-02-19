@@ -1,4 +1,7 @@
-﻿using System.Runtime.InteropServices;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Interop;
 
@@ -59,14 +62,16 @@ public partial class HotkeyHelper
     private const int WM_HOTKEY = 0x0312;
 
     private readonly IntPtr _hWnd;
-    private readonly string[] _emojis;
+    private readonly IOptionsMonitor<AppSettings> _emojis;
     private readonly App _app;
+    private readonly ILogger<HotkeyHelper> _logger;
 
-    public HotkeyHelper(IntPtr hWnd, string[] emojis, App app)
+    public HotkeyHelper(IntPtr hWnd, IOptionsMonitor<AppSettings> emojis, App app, ILogger<HotkeyHelper> logger)
     {
         _hWnd = hWnd;
         _emojis = emojis;
         _app = app;
+        _logger = logger;
     }
 
     public void RegisterHotkeys()
@@ -112,9 +117,13 @@ public partial class HotkeyHelper
             var index = keyNumber == 0
                 ? 9
                 : keyNumber - 1;
-            InputHelpers.SendText(_emojis[index]);
+            var value = _emojis.CurrentValue.Emojis[index];
+            InputHelpers.SendText(value);
             handled = true;
+
+            _logger.LogInformation($"Emoji {index} sent, value: {value} (encoded hex: {string.Join(", ", Encoding.UTF8.GetBytes(value))})");
         }
+
         return IntPtr.Zero;
     }
 

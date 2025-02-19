@@ -1,7 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Serilog;
+using System.IO;
 using System.Windows;
 using System.Windows.Interop;
 using Application = System.Windows.Application;
@@ -43,11 +46,17 @@ public partial class App : Application
         👉👈
      */
 
-    public string[] Emojis { get; } = [ "😂", "❤️", "👍", "😭", "🔥", "🥺", "💀", "✅", "❌", "✨" ];
+    private readonly string[] _defaultEmojis = [ "😂", "♥", "👍", "😭", "🔥", "🥺", "💀", "✔", "❌", "✨" ];
+
+    public IOptionsMonitor<AppSettings> AppSettings => _host.Services.GetRequiredService<IOptionsMonitor<AppSettings>>();
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        Serilog.Log.Logger = new LoggerConfiguration()
+            .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.log"))
+            .CreateLogger();
 
         _host = Host.CreateDefaultBuilder(e.Args)
             .ConfigureAppConfiguration((context, config) =>
@@ -58,11 +67,34 @@ public partial class App : Application
             .ConfigureServices((context, services) =>
             {
                 services.Configure<AppSettings>(context.Configuration);
+                services.AddLogging(loggingBuilder =>
+                {
+                    loggingBuilder.AddSerilog();
+                });
             })
             .Build();
 
+        var logger = _host.Services.GetRequiredService<ILogger<App>>();
+        logger.LogInformation("Application started");
+
         var appSettings = _host.Services.GetRequiredService<IOptionsMonitor<AppSettings>>();
         appSettings.OnChange(OnAppSettingsChanged);
+
+        var shouldShowSettings = false;
+        var config = _host.Services.GetRequiredService<IConfiguration>();
+        if (config.GetValue<bool>("FirstRun", true))
+        {
+            logger.LogInformation("First run detected, setting default emojis");
+
+            foreach (var (emoji, index) in _defaultEmojis.Select((emoji, index) => (emoji, index)))
+            {
+                config[$"Emojis:{index}"] = emoji;
+            }
+
+            config["FirstRun"] = "false";
+
+            shouldShowSettings = true;
+        }
 
         _mainWindow = new MainWindow(this);
         _mainWindow.Loaded += MainWindow_Loaded;
@@ -82,13 +114,20 @@ public partial class App : Application
         _notifyIcon.DoubleClick += (s, args) => ShowMainWindow();
 
         var contextMenu = new ContextMenuStrip();
+        contextMenu.Items.Add("Settings", null, (s, args) => ShowSettingsWindow());
         contextMenu.Items.Add("Exit", null, (s, args) => Shutdown());
         _notifyIcon.ContextMenuStrip = contextMenu;
+
+        if (shouldShowSettings)
+        {
+            ShowSettingsWindow();
+        }
     }
 
     private static void OnAppSettingsChanged(AppSettings newSettings)
     {
-        Console.WriteLine($"Settings changed: Setting1={newSettings.Setting1}, Setting2={newSettings.Setting2}");
+        var emojis = newSettings.Emojis ?? [];
+        Console.WriteLine($"Settings changed: current emojis: {string.Join(", ", emojis)}");
     }
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -99,7 +138,9 @@ public partial class App : Application
     private void HiddenWindow_Loaded(object sender, RoutedEventArgs e)
     {
         IntPtr hWnd = new WindowInteropHelper(_hiddenWindow).Handle;
-        _hotkeyHelper = new HotkeyHelper(hWnd, Emojis, this);
+
+        // TODO use DI
+        _hotkeyHelper = new HotkeyHelper(hWnd, AppSettings, this, _host.Services.GetRequiredService<ILogger<HotkeyHelper>>());
         _hotkeyHelper.RegisterHotkeys();
     }
 
@@ -108,6 +149,9 @@ public partial class App : Application
         _hotkeyHelper.UnregisterHotkeys();
         _notifyIcon.Dispose();
         _host.Dispose();
+        _mainWindow.Dispose();
+
+        Serilog.Log.CloseAndFlush();
 
         base.OnExit(e);
     }
@@ -118,6 +162,12 @@ public partial class App : Application
         _mainWindow.Visibility = Visibility.Visible;
         _mainWindow.Show();
         _mainWindow.Activate();
+    }
+
+    public void ShowSettingsWindow()
+    {
+        var settingsWindow = new SettingsWindow(this);
+        settingsWindow.ShowDialog();
     }
 
     public void UpdateConfiguration(string key, string value)

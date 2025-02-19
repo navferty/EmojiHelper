@@ -1,0 +1,30 @@
+<Window x:Class="EmojiHelper.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
+        Title="Settings" Height="500" Width="300">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Margin="10">
+            <TextBlock Text="Configure Emojis" FontWeight="Bold" Margin="0,0,0,10"/>
+            <ItemsControl ItemsSource="{Binding Emojis}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="{Binding Position}" Width="20" VerticalAlignment="Center"/>
+                            <TextBox Text="{Binding Emoji, Mode=TwoWay}" Width="200"/>
+                            <emoji:TextBlock FontSize="18" Text="{Binding Emoji, Mode=TwoWay}" Margin="10,0,0,0"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="10">
+            <Button Content="Save" Width="75" Margin="5" Click="SaveButton_Click"/>
+            <Button Content="Cancel" Width="75" Margin="5" Click="CancelButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
