@@ -7,7 +7,8 @@
         xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf"
         mc:Ignorable="d"
         Title="MainWindow" Height="50" Width="Auto"
-        WindowStyle="None" AllowsTransparency="True" Background="Transparent">
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Icon="pack://application:,,,/favicon.ico">
     <Grid>
         <ItemsControl ItemsSource="{Binding Emojis}">
             <ItemsControl.ItemsPanel>
