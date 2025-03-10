@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Serilog;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Interop;
 using Application = System.Windows.Application;
 
@@ -54,7 +55,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        Serilog.Log.Logger = new LoggerConfiguration()
+        Log.Logger = new LoggerConfiguration()
             .WriteTo.File(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.log"))
             .CreateLogger();
 
@@ -99,10 +100,35 @@ public partial class App : Application
         _mainWindow = new MainWindow(this);
         _mainWindow.Loaded += MainWindow_Loaded;
 
-        _hiddenWindow = new Window { Width = 0, Height = 0, ShowInTaskbar = false, WindowStyle = WindowStyle.None };
+        InitializeHiddenWindow();
+
+        InitializeNotifyIcon();
+
+        if (shouldShowSettings)
+        {
+            ShowSettingsWindow();
+        }
+    }
+
+    private void InitializeHiddenWindow()
+    {
+        _hiddenWindow = new Window
+        {
+            Width = 200,
+            Height = 100,
+            Title = "Emoji Helper",
+            ShowInTaskbar = false,
+            Content = new TextBlock { Text = "Loading Emojis..." },
+            WindowStyle = WindowStyle.ToolWindow,
+        };
         _hiddenWindow.Loaded += HiddenWindow_Loaded;
         _hiddenWindow.Show();
+        Thread.Sleep(500);
+        _hiddenWindow.Hide();
+    }
 
+    private void InitializeNotifyIcon()
+    {
         using var iconStream = typeof(App).Assembly.GetManifestResourceStream("EmojiHelper.favicon.ico")
             ?? throw new InvalidOperationException("Icon not found");
         _notifyIcon = new NotifyIcon
@@ -117,11 +143,6 @@ public partial class App : Application
         contextMenu.Items.Add("Settings", null, (s, args) => ShowSettingsWindow());
         contextMenu.Items.Add("Exit", null, (s, args) => Shutdown());
         _notifyIcon.ContextMenuStrip = contextMenu;
-
-        if (shouldShowSettings)
-        {
-            ShowSettingsWindow();
-        }
     }
 
     private static void OnAppSettingsChanged(AppSettings newSettings)
@@ -151,7 +172,7 @@ public partial class App : Application
         _host.Dispose();
         _mainWindow.Dispose();
 
-        Serilog.Log.CloseAndFlush();
+        Log.CloseAndFlush();
 
         base.OnExit(e);
     }
